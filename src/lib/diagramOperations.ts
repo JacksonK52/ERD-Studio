@@ -95,6 +95,19 @@ export function setTableColor(diagram: Diagram, tableId: string, color: string |
   return withTable(diagram, tableId, (t) => (t.color === color ? t : { ...t, color }));
 }
 
+export function resizeTable(
+  diagram: Diagram,
+  tableId: string,
+  width: number,
+  position?: { x: number; y: number },
+): Diagram {
+  return withTable(diagram, tableId, (t) => ({
+    ...t,
+    width,
+    position: position ?? t.position,
+  }));
+}
+
 export function deleteTable(diagram: Diagram, tableId: string): Diagram {
   return {
     ...diagram,

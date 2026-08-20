@@ -36,7 +36,7 @@ export function computeLayout(diagram: Diagram): DiagramLayout {
     table,
     x: table.position.x,
     y: table.position.y,
-    width: TABLE_WIDTH,
+    width: table.width ?? TABLE_WIDTH,
     height: computeTableHeight(table),
   }));
 

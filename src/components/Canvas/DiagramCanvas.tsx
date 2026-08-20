@@ -50,6 +50,7 @@ function diagramToNodes(
       id: t.id,
       type: "table",
       position: t.position,
+      width: t.width ?? TABLE_WIDTH,
       data: {},
       selected: prev?.selected,
       dragging: prev?.dragging,

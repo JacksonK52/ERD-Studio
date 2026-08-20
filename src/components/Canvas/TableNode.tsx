@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, DragEvent } from "react";
 import { GripVertical, Palette, Plus, Trash2 } from "lucide-react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import {
+  Handle,
+  NodeResizeControl,
+  Position,
+  ResizeControlVariant,
+  type NodeProps,
+} from "@xyflow/react";
 import { useDiagramStore } from "../../store/diagramStore";
 import { useUIStore } from "../../store/uiStore";
 import {
@@ -12,6 +18,7 @@ import {
   renameColumn,
   renameTable,
   reorderColumns,
+  resizeTable,
   setTableColor,
   toggleColumnMeta,
 } from "../../lib/diagramOperations";
@@ -22,6 +29,8 @@ import { ColorSwatchPicker } from "../common/ColorSwatchPicker";
 import { InlineEditableText } from "../common/InlineEditableText";
 
 export const TABLE_WIDTH = 240;
+const MIN_TABLE_WIDTH = 180;
+const MAX_TABLE_WIDTH = 520;
 
 const META_KEYS: Array<{ key: keyof ColumnMeta; label: string; title: string }> = [
   { key: "pk", label: "PK", title: "Primary key" },
@@ -87,11 +96,21 @@ export function TableNode({ id: tableId, selected }: NodeProps) {
 
   if (!table) return null;
 
+  const width = table.width ?? TABLE_WIDTH;
+  // Wider than the visible bar it contains, so the actual hit target is
+  // easy to land on — the earlier 8px hairline was routinely missed,
+  // dropping the click through to the table body and dragging it instead.
+  const resizeHandleStyle: CSSProperties = { width: 14, background: "transparent", border: "none" };
+
+  function handleResizeEnd(_: unknown, params: { x: number; y: number; width: number }) {
+    commit((d) => resizeTable(d, tableId, params.width, { x: params.x, y: params.y }));
+  }
+
   return (
     <div
       className="rounded-lg border transition-shadow"
       style={{
-        width: TABLE_WIDTH,
+        width,
         background: "var(--color-surface)",
         borderWidth: table.color ? 1.5 : 1,
         borderColor: table.color ?? (selected ? "var(--color-accent)" : "var(--color-border)"),
@@ -100,6 +119,45 @@ export function TableNode({ id: tableId, selected }: NodeProps) {
           : "0 1px 2px rgba(0,0,0,0.04)",
       }}
     >
+      {selected && (
+        <>
+          <NodeResizeControl
+            position="right"
+            variant={ResizeControlVariant.Line}
+            resizeDirection="horizontal"
+            minWidth={MIN_TABLE_WIDTH}
+            maxWidth={MAX_TABLE_WIDTH}
+            style={resizeHandleStyle}
+            className="group"
+            onResizeEnd={handleResizeEnd}
+          >
+            <div className="flex h-full w-full items-center justify-center">
+              <div
+                className="h-8 w-1 rounded-full opacity-40 transition-opacity group-hover:opacity-100"
+                style={{ background: "var(--color-accent)" }}
+              />
+            </div>
+          </NodeResizeControl>
+          <NodeResizeControl
+            position="left"
+            variant={ResizeControlVariant.Line}
+            resizeDirection="horizontal"
+            minWidth={MIN_TABLE_WIDTH}
+            maxWidth={MAX_TABLE_WIDTH}
+            style={resizeHandleStyle}
+            className="group"
+            onResizeEnd={handleResizeEnd}
+          >
+            <div className="flex h-full w-full items-center justify-center">
+              <div
+                className="h-8 w-1 rounded-full opacity-40 transition-opacity group-hover:opacity-100"
+                style={{ background: "var(--color-accent)" }}
+              />
+            </div>
+          </NodeResizeControl>
+        </>
+      )}
+
       {/* Header */}
       <div
         className="group/header relative flex items-center gap-1 rounded-t-[7px] border-b px-2.5 py-1.5"
